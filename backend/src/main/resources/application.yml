@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: redislab
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:redislab}
+    username: ${POSTGRES_USER:redislab}
+    password: ${POSTGRES_PASSWORD:redislab}
+  sql:
+    init:
+      mode: always
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cache:
+    type: redis
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+lab:
+  seed:
+    # Postgres demo data, generated on first start when the products table is empty
+    products: 50000
+    reviews: 1000000
+  catalog:
+    cache-ttl: 10m
+  spring-cache:
+    ttl: 60s
+  search:
+    # How many products are copied into Redis JSON documents for the Search demo
+    docs: 50000

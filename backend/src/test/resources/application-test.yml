@@ -1,0 +1,6 @@
+lab:
+  seed:
+    products: 3000
+    reviews: 60000
+  search:
+    docs: 3000
