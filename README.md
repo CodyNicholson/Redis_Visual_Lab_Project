@@ -13,7 +13,7 @@ The headline demo fetches a 50,000-row catalog (products joined with an aggregat
 ## Quick start
 
 ```bash
-docker network create tunnel-net   # once; the frontend joins it for the Cloudflare tunnel
+docker network create tunnel-net   # once; the compose file joins this external network
 docker compose up -d --build
 ```
 
@@ -21,7 +21,7 @@ Open <http://localhost:3000>. The first start seeds Postgres (about 7 s); the ba
 
 | Service | Container | Host port |
 |---|---|---|
-| React UI (nginx, proxies `/api`) | `rixus-frontend` | 3000 |
+| React UI (unprivileged nginx, proxies `/api`) | – | 3000 |
 | Spring Boot API | `redis-lab-backend` | 8080 |
 | Redis 8.2 | `redis-lab-redis` | 6379 |
 | PostgreSQL 16 | `redis-lab-postgres` | 5436 |
@@ -65,7 +65,7 @@ Redis runs with `--appendonly yes` (AOF persistence), `--maxmemory 512mb --maxme
 ## Architecture
 
 ```
-Browser ──/api──▶ nginx (rixus-frontend:80) ──▶ Spring Boot (:8080) ──▶ Redis 8 (:6379)
+Browser ──/api──▶ nginx (frontend:80) ────────▶ Spring Boot (:8080) ──▶ Redis 8 (:6379)
    ▲                                               │        │
    └──── Server-Sent Events (/api/events/stream) ◀─┘        └──▶ PostgreSQL 16 (:5432)
 ```
@@ -99,13 +99,22 @@ cd frontend && npm install && npm test
 
 ```bash
 docker compose up -d postgres redis
-cd backend && mvn spring-boot:run      # :8080
+cd backend && POSTGRES_PORT=5436 POSTGRES_PASSWORD="$(grep '^POSTGRES_PASSWORD=' ../.env | cut -d= -f2-)" mvn spring-boot:run   # :8080
 cd frontend && npm install && npm run dev   # :3000, proxies /api to :8080
 ```
 
-## Deployment
+## Security
 
-`pipeline-run.sh` (git-ignored, same as the other workspace labs) pulls the code, removes **all** containers on the host, starts the Cloudflare tunnel on `tunnel-net`, and runs `docker compose up -d --build`. The UI container is named `rixus-frontend` and listens on :80 because the tunnel routes to `http://rixus-frontend:80`. Endpoint inputs are clamped (threads, keys, commands) because the lab can be public.
+- Host ports are bound to `127.0.0.1` only. Docker publishes ports through its own iptables rules,
+  which bypass host firewalls such as `ufw`, so a bare `3000:80` would be reachable from outside.
+- `POSTGRES_PASSWORD` has no fallback: compose refuses to start until it is set in `.env`.
+- Redis and Postgres sit on `backend-net` with the backend; the public nginx container cannot reach them.
+- Endpoint inputs are clamped (threads, keys, commands) because the lab can be public.
+- nginx runs unprivileged (uid 101) with all capabilities dropped, `no-new-privileges`, and memory,
+  CPU and process limits; the other containers have `no-new-privileges` and memory and process limits.
+- Every response carries `Content-Security-Policy` (same-origin only, no framing),
+  `X-Content-Type-Options`, `Referrer-Policy` and `Permissions-Policy`
+  (`frontend/security-headers.conf`); the nginx version is hidden.
 
 ## Notes
 
