@@ -45,7 +45,7 @@ export default function App() {
       <div className="app">
         <header className="topbar">
           <div className="brand">
-            <span className="logo" aria-hidden="true"><span /><span /><span /></span>
+            <span className="logo logo-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 11l8-4 8 4-8 4zM8 16l8 4 8-4M8 21l8 4 8-4" /></svg></span>
             <div>
               <h1>Redis Visual Lab</h1>
               <p>Spring Boot · PostgreSQL · Redis 8: every button runs real commands</p>

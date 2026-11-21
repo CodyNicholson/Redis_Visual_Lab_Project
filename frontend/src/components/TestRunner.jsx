@@ -58,6 +58,7 @@ export default function TestRunner({ results, setResults, onOpen }) {
         </div>
       </section>
       <section className="card">
+        <div className="table-wrap">
         <table className="suite">
           <thead><tr><th>demo</th><th>endpoint</th><th>status</th><th>checks</th><th>server time</th></tr></thead>
           <tbody>
@@ -87,6 +88,7 @@ export default function TestRunner({ results, setResults, onOpen }) {
             })}
           </tbody>
         </table>
+        </div>
       </section>
     </article>
   );

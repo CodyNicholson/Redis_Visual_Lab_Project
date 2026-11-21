@@ -7,9 +7,13 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+# Test stage: `docker build --target test frontend` runs the Vitest suite
+FROM build AS test
+RUN npm test
+
 # Unprivileged nginx runs as uid 101, not root. It can still listen on 80 because Docker lets
 # containers bind low ports (net.ipv4.ip_unprivileged_port_start=0).
-FROM nginxinc/nginx-unprivileged:1.31-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS runtime
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY security-headers.conf /etc/nginx/snippets/security-headers.conf
